@@ -119,8 +119,8 @@ function Peticion(accion, resolution) {
                 operacion.jugadas.push(vbs);
             };
 
-            
-            if(vri_apertura){
+
+            if (vri_apertura) {
                 console.log("VRI en " + accion)
                 vbs.simbolo = operacion.divisas;
                 vbs.fecha = new Date().toLocaleString();
@@ -866,6 +866,7 @@ function Reversa(array_datos) {
 //Una primera vela sólida apertura en 25% del bajo y cierre en el 25% alto para los toros
 //La siguiente vela permanece en el tercio superior (puediendo rebasar el alto en un 20% como máximo)
 //Unos resultados realmente interesantes, la voy a seguir estudiando en vivo y viendo cómo podría mejorarla
+//
 function VRI_Apertura(array_datos) {
     if (!array_datos.h) {
         console.log(array_datos);
@@ -877,7 +878,7 @@ function VRI_Apertura(array_datos) {
 
 
     //Obtengo la fecha y hora para saber si aún debo ejecutar este script
-    let date = new Date(array_datos.t[array_datos.t.length-1] * 1000).toISOString();
+    let date = new Date(array_datos.t[array_datos.t.length - 1] * 1000).toISOString();
 
     let hora_fin = "T16:46:00.000Z";
     let hora_inicio = "T14:28:00.000Z"
@@ -888,25 +889,25 @@ function VRI_Apertura(array_datos) {
 
     if (moment(date).isBefore(date2) && moment(date).isAfter(date3)) {
         //Obtengo los datos de las tres velas anteriores
-        let high = array_datos.h[array_datos.h.length-1];
-        let high_1 = array_datos.h[array_datos.h.length-2];
+        let high = array_datos.h[array_datos.h.length - 1];
+        let high_1 = array_datos.h[array_datos.h.length - 2];
 
-        let low = array_datos.l[array_datos.l.length-1];
-        let low_1 = array_datos.l[array_datos.l.length-2];
+        let low = array_datos.l[array_datos.l.length - 1];
+        let low_1 = array_datos.l[array_datos.l.length - 2];
 
-        let close = array_datos.c[array_datos.c.length-1];
-        let close_1 = array_datos.c[array_datos.c.length-2];
+        let close = array_datos.c[array_datos.c.length - 1];
+        let close_1 = array_datos.c[array_datos.c.length - 2];
 
-        let open = array_datos.o[array_datos.o.length-1];
-        let open_1 = array_datos.o[array_datos.o.length-2];
+        let open = array_datos.o[array_datos.o.length - 1];
+        let open_1 = array_datos.o[array_datos.o.length - 2];
 
         let rango_1 = high_1 - low_1
 
-        let mm20 = Media20(array_datos.c, array_datos.c.length-1)
+        let mm20 = Media20(array_datos.c, array_datos.c.length - 1)
 
 
 
-        if (open_1 <= low_1 + (0.25 * rango_1) && close_1 >= high_1 - (0.25 * rango_1) && high < high_1 + (rango_1 * 0.2) && low > high_1 - (rango_1 * 0.35)) {
+        if (open_1 <= low_1 + (0.25 * rango_1) && close_1 >= high_1 - (0.25 * rango_1) && high < high_1 + (rango_1 * 0.2) && low > high_1 - (rango_1 * 0.4)) {
 
             operacion.jugada = "VRI";
             operacion.direccion = "largo";
@@ -914,11 +915,11 @@ function VRI_Apertura(array_datos) {
             operacion.stop = low;
             operacion.riesgo = Math.round((high - low) * 100000) / 100000;
             operacion.lotes = Math.round((operacion.ru / operacion.riesgo) * 100000) / 100000;
-    
+
             return operacion;
         }
 
-        if (open_1 >= high_1 - (0.25 * rango_1) && close_1 <= low_1 + (0.25 * rango_1) && low > low_1 - (rango_1 * 0.2) && high < low_1 + (rango_1 * 0.35)) {
+        if (open_1 >= high_1 - (0.25 * rango_1) && close_1 <= low_1 + (0.25 * rango_1) && low > low_1 - (rango_1 * 0.2) && high < low_1 + (rango_1 * 0.4)) {
 
             operacion.jugada = "VRI";
             operacion.direccion = "Corto";
@@ -926,7 +927,7 @@ function VRI_Apertura(array_datos) {
             operacion.stop = high;
             operacion.riesgo = Math.round((high - low) * 100000) / 100000;
             operacion.lotes = Math.round((operacion.ru / operacion.riesgo) * 100000) / 100000;
-    
+
             return operacion;
         }
     };
@@ -957,6 +958,7 @@ function Formatear(array_datos) {
 
 
         if (moment(date).isBefore(date2) && moment(date).isAfter(date3)) {
+            
             datos_procesados.c.push(array_datos.c[i]);
             datos_procesados.h.push(array_datos.h[i]);
             datos_procesados.l.push(array_datos.l[i]);
@@ -984,17 +986,17 @@ function Delay() {
 
 
 function Media20(data, position) {
-    let cierres = data.slice(position - 20, position);
+    let cierres = data.slice(position - 19, position + 1);
     return CalcularMedia(cierres);
 }
 
 function Media8(data, position) {
-    let cierres = data.slice(position - 8, position);
+    let cierres = data.slice(position - 7, position + 1);
     return CalcularMedia(cierres);
 }
 
 function Media200(data, position) {
-    let cierres = data.slice(position - 200, position);
+    let cierres = data.slice(position - 199, position + 1);
     return CalcularMedia(cierres);
 }
 

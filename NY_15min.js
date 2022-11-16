@@ -70,7 +70,7 @@ async function Bucle (resolution){
     return;
 }
 
-
+ 
 
 function Peticion(accion,resolution) {
 
