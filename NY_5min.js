@@ -7,8 +7,9 @@ const { delay } = require('bluebird');
 
 async function Bucle(resolution) {
 
-    let array_acciones = ["AAPL", "BABA", "C", "CVX", "DIS", "EBAY", "META", "GILD", "GLD", "IWM", "KO", "LVS", "MET", "NKE", "NUGT", "PYPL", "QCOM", "UAL", "VZ", "JPM", "MS", "MRK", "MU", "ORCL", "SBUX", "SPXL", "UBER", "WMT", "WYNN", "AMZN", "JNJ", "PG", "IBM", "NIO", "XLE", "X", "GE", "WBA", "AAL", "BAC", "GM", "DD", "COP", "ABBV", "BMY", "GOOG", "NEE", "NVDA", "WDC", "XLF", "SHOP", "ATVI", "CVS", "TMUS", "MDT", "FISV", "PM", "PEP", "EWZ", "FXI"];
-    // -- ,"MDT","FISV","PM" -- FCX, CLF, MTCH, PFE, ARKK, CMCSA
+    let array_acciones = ["AAPL", "BABA", "C", "CVX", "DIS", "EBAY", "META", "GILD", "GLD", "IWM", "KO", "LVS", "MET", "NKE", "NUGT", "PYPL", "QCOM", "UAL", "VZ", "JPM", "MS", "MRK", "MU", "ORCL", "SBUX", "SPXL", "UBER", "WYNN", "AMZN", "JNJ", "PG", "IBM", "NIO", "XLE", "GE", "WBA", "AAL", "BAC", "GM", "DD", "COP", "ABBV", "BMY", "GOOG", "NEE", "NVDA", "WDC", "XLF", "SHOP", "ATVI", "CVS", "MDT", "FISV", "PM", "PEP", "EWZ", "FXI", "WMT", "X", "RIVN"];
+    //Temporalmente ni disponibles: 
+    // -- ,"MDT","FISV","PM" -- FCX, CLF, MTCH, PFE, ARKK, CMCSA , "NCLH" , "TMUS"
     console.log(array_acciones.length)
     let operaciones_encontradas = [];
     console.log("Comenzando a analizar los gráficos de " + resolution + " minutos");
@@ -100,11 +101,21 @@ function Peticion(accion, resolution) {
         request('https://finnhub.io/api/v1/indicator?symbol=' + accion + '&resolution=' + resolution + '&from=' + inicio + '&to=' + fecha + '&indicator=ADX&timeperiod=14&token=c2mb3fqad3idu4ahvsh0', { json: true }, (err, res, body) => {
             if (err) { return reject(err); }
 
+            if (!res.body.t) {
+                console.log(accion);
+                console.log(res.body);
+                return resolve(operacion);
+
+            }
+
             let datos = Formatear(res.body);
 
             let vbs = VBSADX(datos);
 
             let vri_apertura = VRI_Apertura(datos);
+
+            let vri_tarde = VRI_Tarde(datos);
+
 
             // let regalo = Regalo(datos);
 
@@ -119,8 +130,16 @@ function Peticion(accion, resolution) {
                 operacion.jugadas.push(vbs);
             };
 
+
+            if (vri_apertura) {
+                console.log("VRI en " + accion)
+                vbs.simbolo = operacion.divisas;
+                vbs.fecha = new Date().toLocaleString();
+                operacion.jugadas.push(vbs);
+            }
+
             
-            if(vri_apertura){
+            if (vri_tarde) {
                 console.log("VRI en " + accion)
                 vbs.simbolo = operacion.divisas;
                 vbs.fecha = new Date().toLocaleString();
@@ -877,7 +896,7 @@ function VRI_Apertura(array_datos) {
 
 
     //Obtengo la fecha y hora para saber si aún debo ejecutar este script
-    let date = new Date(array_datos.t[array_datos.t.length-1] * 1000).toISOString();
+    let date = new Date(array_datos.t[array_datos.t.length - 1] * 1000).toISOString();
 
     let hora_fin = "T16:46:00.000Z";
     let hora_inicio = "T14:28:00.000Z"
@@ -888,25 +907,25 @@ function VRI_Apertura(array_datos) {
 
     if (moment(date).isBefore(date2) && moment(date).isAfter(date3)) {
         //Obtengo los datos de las tres velas anteriores
-        let high = array_datos.h[array_datos.h.length-1];
-        let high_1 = array_datos.h[array_datos.h.length-2];
+        let high = array_datos.h[array_datos.h.length - 1];
+        let high_1 = array_datos.h[array_datos.h.length - 2];
 
-        let low = array_datos.l[array_datos.l.length-1];
-        let low_1 = array_datos.l[array_datos.l.length-2];
+        let low = array_datos.l[array_datos.l.length - 1];
+        let low_1 = array_datos.l[array_datos.l.length - 2];
 
-        let close = array_datos.c[array_datos.c.length-1];
-        let close_1 = array_datos.c[array_datos.c.length-2];
+        let close = array_datos.c[array_datos.c.length - 1];
+        let close_1 = array_datos.c[array_datos.c.length - 2];
 
-        let open = array_datos.o[array_datos.o.length-1];
-        let open_1 = array_datos.o[array_datos.o.length-2];
+        let open = array_datos.o[array_datos.o.length - 1];
+        let open_1 = array_datos.o[array_datos.o.length - 2];
 
         let rango_1 = high_1 - low_1
 
-        let mm20 = Media20(array_datos.c, array_datos.c.length-1)
+        let mm20 = Media20(array_datos.c, array_datos.c.length - 1)
 
 
 
-        if (open_1 <= low_1 + (0.25 * rango_1) && close_1 >= high_1 - (0.25 * rango_1) && high < high_1 + (rango_1 * 0.2) && low > high_1 - (rango_1 * 0.35)) {
+        if (open_1 <= low_1 + (0.25 * rango_1) && close_1 >= high_1 - (0.25 * rango_1) && high < high_1 + (rango_1 * 0.2) && low > high_1 - (rango_1 * 0.4)) {
 
             operacion.jugada = "VRI";
             operacion.direccion = "largo";
@@ -914,11 +933,11 @@ function VRI_Apertura(array_datos) {
             operacion.stop = low;
             operacion.riesgo = Math.round((high - low) * 100000) / 100000;
             operacion.lotes = Math.round((operacion.ru / operacion.riesgo) * 100000) / 100000;
-    
+
             return operacion;
         }
 
-        if (open_1 >= high_1 - (0.25 * rango_1) && close_1 <= low_1 + (0.25 * rango_1) && low > low_1 - (rango_1 * 0.2) && high < low_1 + (rango_1 * 0.35)) {
+        if (open_1 >= high_1 - (0.25 * rango_1) && close_1 <= low_1 + (0.25 * rango_1) && low > low_1 - (rango_1 * 0.2) && high < low_1 + (rango_1 * 0.4)) {
 
             operacion.jugada = "VRI";
             operacion.direccion = "Corto";
@@ -926,7 +945,7 @@ function VRI_Apertura(array_datos) {
             operacion.stop = high;
             operacion.riesgo = Math.round((high - low) * 100000) / 100000;
             operacion.lotes = Math.round((operacion.ru / operacion.riesgo) * 100000) / 100000;
-    
+
             return operacion;
         }
     };
@@ -934,7 +953,95 @@ function VRI_Apertura(array_datos) {
     return false;
 }
 
+function VRI_Tarde(array_datos) {
+    if (!array_datos.h) {
+        console.log(array_datos);
+    }
 
+    let operacion = {
+        ru: 50
+    };
+
+
+    //Obtengo la fecha y hora para saber si aún debo ejecutar este script
+    let date = new Date(array_datos.t[array_datos.t.length - 1] * 1000).toISOString();
+
+    let hora_fin = "T20:44:00.000Z";
+    let hora_inicio = "T18:01:00.000Z"
+
+
+    let date2 = date.split("T")[0] + hora_fin;
+    let date3 = date.split("T")[0] + hora_inicio;
+
+    if (moment(date).isBefore(date2) && moment(date).isAfter(date3)) {
+
+        //Objeto en el que voy a almacenar la información de las 12 velas anteriores
+        let objeto_velas = {
+            apertura: [],
+            cierre: [],
+            rango: []
+        }
+
+        //Obtengo la apertura y el ciere de las velas anteriores
+        objeto_velas.apertura = array_datos.o.slice(array_datos.o.length - 14, array_datos.o.length - 2);
+        objeto_velas.cierre = array_datos.c.slice(array_datos.c.length - 14, i - 2);
+
+        //Hago un bucle para restar la apertura menos el cierre para obtener el rango de cada vela
+        for (let i = 0; i < objeto_velas.apertura.length; i++) {
+
+            objeto_velas.rango.push(Math.round(Math.abs(objeto_velas.apertura[i] - objeto_velas.cierre[i]) * 1000) / 1000);
+
+        };
+
+
+        //Obtengo los datos de las tres velas anteriores
+        let high = array_datos.h[array_datos.h.length - 1];
+        let high_1 = array_datos.h[array_datos.h.length - 2];
+
+        let low = array_datos.l[array_datos.l.length - 1];
+        let low_1 = array_datos.l[array_datos.l.length - 2];
+
+        let close = array_datos.c[array_datos.c.length - 1];
+        let close_1 = array_datos.c[array_datos.c.length - 2];
+
+        let open = array_datos.o[array_datos.o.length - 1];
+        let open_1 = array_datos.o[array_datos.o.length - 2];
+
+        let rango_1 = high_1 - low_1
+        let rango_color_1 = Math.round( Math.abs( open_1 - close_1 ) * 1000) / 1000;
+
+        let mm20 = Media20(array_datos.c, array_datos.c.length - 1)
+
+        let mayor_vela = Mayor(objeto_velas.rango);
+
+
+        if (rango_color_1 >= mayor_vela && open_1 <= low_1 + (0.25*rango_1) && close_1 >= high_1 - (0.25*rango_1) && high < high_1 + (rango_1 * 0.2) && low > high_1 - (rango_1 * 0.35) ) {
+
+            operacion.jugada = "VRI Tarde";
+            operacion.direccion = "largo";
+            operacion.entrada = high;
+            operacion.stop = low;
+            operacion.riesgo = Math.round((high - low) * 100000) / 100000;
+            operacion.lotes = Math.round((operacion.ru / operacion.riesgo) * 100000) / 100000;
+
+            return operacion;
+        }
+
+        if (rango_color_1 >= mayor_vela && open_1 >= high_1 - (0.25*rango_1) && close_1 <= low_1 + (0.25*rango_1) && low > low_1 - (rango_1 * 0.2) && high < low_1 + (rango_1 * 0.35) ) {
+
+            operacion.jugada = "VRI Tarde";
+            operacion.direccion = "Corto";
+            operacion.entrada = low;
+            operacion.stop = high;
+            operacion.riesgo = Math.round((high - low) * 100000) / 100000;
+            operacion.lotes = Math.round((operacion.ru / operacion.riesgo) * 100000) / 100000;
+
+            return operacion;
+        }
+    };
+
+    return false;
+}
 
 function Formatear(array_datos) {
     //console.log(array_datos);
@@ -952,11 +1059,15 @@ function Formatear(array_datos) {
 
     for (i = 0; i < array_datos.t.length; i++) {
         let date = new Date(array_datos.t[i] * 1000).toISOString();
-        let date2 = date.split("T")[0] + "T20:00:00.000Z";
+
+        //Horario Verano T13:25:00.000Z -- T20:00:00.000Z 
+        //Horario Invierno T14:25:00.000Z -- T21:00:00.000Z 
+        let date2 = date.split("T")[0] + "T21:00:00.000Z";
         let date3 = date.split("T")[0] + "T14:25:00.000Z"
 
 
         if (moment(date).isBefore(date2) && moment(date).isAfter(date3)) {
+
             datos_procesados.c.push(array_datos.c[i]);
             datos_procesados.h.push(array_datos.h[i]);
             datos_procesados.l.push(array_datos.l[i]);
@@ -984,17 +1095,17 @@ function Delay() {
 
 
 function Media20(data, position) {
-    let cierres = data.slice(position - 20, position);
+    let cierres = data.slice(position - 19, position + 1);
     return CalcularMedia(cierres);
 }
 
 function Media8(data, position) {
-    let cierres = data.slice(position - 8, position);
+    let cierres = data.slice(position - 7, position + 1);
     return CalcularMedia(cierres);
 }
 
 function Media200(data, position) {
-    let cierres = data.slice(position - 200, position);
+    let cierres = data.slice(position - 199, position + 1);
     return CalcularMedia(cierres);
 }
 
